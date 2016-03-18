@@ -13,6 +13,8 @@ import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +43,7 @@ public class ActiveMQSenderImpl implements ActiveMQSender {
         try {
 
             final String json = objectMapper.writeValueAsString(object);
-            internalSend(json);
+            internalSend(json, Collections.emptyMap());
 
         } catch (Exception e) {
             throw new RuntimeException("Error sending to jms", e);
@@ -53,7 +55,7 @@ public class ActiveMQSenderImpl implements ActiveMQSender {
     public void sendJson(String json) {
         try {
 
-            internalSend(json);
+            internalSend(json, Collections.emptyMap());
 
         } catch (Exception e) {
             throw new RuntimeException("Error sending to jms", e);
@@ -61,7 +63,19 @@ public class ActiveMQSenderImpl implements ActiveMQSender {
 
     }
 
-    private void internalSend(String json) throws JMSException {
+    @Override
+    public void sendJson(String json, Map<String, String> headerMap) {
+        try {
+
+            internalSend(json, headerMap);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error sending to jms", e);
+        }
+
+    }
+
+    private void internalSend(String json, Map<String, String> headerMap) throws JMSException {
         if (log.isDebugEnabled()) {
             log.debug("Sending to {}: {}", destination, json);
         }
@@ -71,6 +85,11 @@ public class ActiveMQSenderImpl implements ActiveMQSender {
             String correlationId = ActiveMQBundle.correlationID.get();
             if (textMessage.getJMSCorrelationID() == null && correlationId != null) {
                 textMessage.setJMSCorrelationID(correlationId);
+            }
+            for (Map.Entry<String, String> entry : headerMap.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                textMessage.setStringProperty(key, value);
             }
             return textMessage;
         } );

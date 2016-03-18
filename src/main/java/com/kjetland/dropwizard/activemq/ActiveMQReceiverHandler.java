@@ -6,6 +6,7 @@ import com.kjetland.dropwizard.activemq.errors.JsonError;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.command.ActiveMQMapMessage;
+import org.apache.activemq.command.ActiveMQTextMessage;
 import org.apache.activemq.jms.pool.PooledMessageConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import javax.jms.*;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -116,17 +118,17 @@ public class ActiveMQReceiverHandler<T> implements Managed, Runnable {
 
                 if ( receiverType.equals(String.class)) {
                     // pass the string as is
-                    receiver.receive((T)json);
+                    receiver.receive((T)json, ((ActiveMQTextMessage) message).getProperties());
                 } else {
                     T object = fromJson(json);
-                    receiver.receive(object);
+                    receiver.receive(object, ((ActiveMQTextMessage) message).getProperties());
                 }
 
             } else if (message instanceof ActiveMQMapMessage) {
                 ActiveMQMapMessage m = (ActiveMQMapMessage)message;
                 if ( receiverType.equals(Map.class)) {
                     // pass the string as is
-                    receiver.receive((T)m.getContentMap());
+                    receiver.receive((T)m.getContentMap(), new HashMap<>());
                 } else {
                     throw new Exception("We received a ActiveMQMapMessage-message, so you have to use receiverType = java.util.Map to receive it");
                 }
