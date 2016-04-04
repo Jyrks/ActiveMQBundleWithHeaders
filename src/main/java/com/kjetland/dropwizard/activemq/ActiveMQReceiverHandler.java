@@ -279,7 +279,7 @@ public class ActiveMQReceiverHandler<T> implements Managed, Runnable {
             @Override
             protected Result check() throws Exception {
                 if (isReceiving.get()) {
-                    return Result.healthy("Is receiving from " + destination);
+                    return Result.healthy("OK");
                 } else {
                     return Result.unhealthy("Is NOT receiving from " + destination);
                 }
